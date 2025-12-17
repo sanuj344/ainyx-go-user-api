@@ -7,7 +7,8 @@ package sqlc
 
 import (
 	"context"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -18,17 +19,17 @@ RETURNING id, name, dob
 
 type CreateUserParams struct {
 	Name string
-	Dob  time.Time
+	Dob  pgtype.Date
 }
 
 type CreateUserRow struct {
 	ID   int32
 	Name string
-	Dob  time.Time
+	Dob  pgtype.Date
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Name, arg.Dob)
+	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Dob)
 	var i CreateUserRow
 	err := row.Scan(&i.ID, &i.Name, &i.Dob)
 	return i, err
@@ -40,7 +41,7 @@ WHERE id = $1
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteUser, id)
+	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
 }
 
@@ -53,11 +54,11 @@ WHERE id = $1
 type GetUserByIDRow struct {
 	ID   int32
 	Name string
-	Dob  time.Time
+	Dob  pgtype.Date
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, id int32) (GetUserByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i GetUserByIDRow
 	err := row.Scan(&i.ID, &i.Name, &i.Dob)
 	return i, err
@@ -72,11 +73,11 @@ ORDER BY id
 type ListUsersRow struct {
 	ID   int32
 	Name string
-	Dob  time.Time
+	Dob  pgtype.Date
 }
 
 func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUsers)
+	rows, err := q.db.Query(ctx, listUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -88,9 +89,6 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -109,17 +107,17 @@ RETURNING id, name, dob
 type UpdateUserParams struct {
 	ID   int32
 	Name string
-	Dob  time.Time
+	Dob  pgtype.Date
 }
 
 type UpdateUserRow struct {
 	ID   int32
 	Name string
-	Dob  time.Time
+	Dob  pgtype.Date
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
-	row := q.db.QueryRowContext(ctx, updateUser, arg.ID, arg.Name, arg.Dob)
+	row := q.db.QueryRow(ctx, updateUser, arg.ID, arg.Name, arg.Dob)
 	var i UpdateUserRow
 	err := row.Scan(&i.ID, &i.Name, &i.Dob)
 	return i, err
